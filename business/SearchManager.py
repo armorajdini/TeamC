@@ -7,5 +7,6 @@ class SearchManager:
         criteria = []
         return criteria
 
+
     def show_available_hotels(self, criteria):
         pass
