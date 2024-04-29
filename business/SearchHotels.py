@@ -5,12 +5,12 @@
 def show_available_hotels():
     for hotel in hotels:
         print(f"Hotel: {hotel.name}")
-        print(f"City: {hotel.city}")
-        print(f"Address: {hotel.address}")
-        print(f"Stars: {hotel.stars}")
-        print(f"Room: {hotel.room}")
-        print(f"Availablity: {hotel.available}")
-        print(f"Price: {hotel.price}")
+        print(f"Stadt: {hotel.city}")
+        print(f"Adresse: {hotel.address}")
+        print(f"Sterne: {hotel.stars}")
+        print(f"Anzahl Zimmer: {hotel.rooms}")
+        print(f"Verfügbarkeit: {hotel.available}")
+        print(f"Preis: {hotel.preis}")
         print()
     else:
         print("Sorry, no hotels have available rooms at the moment: ")
