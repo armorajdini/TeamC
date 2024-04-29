@@ -9,13 +9,11 @@ def show_available_hotels():
         print(f"Address: {hotel.address}")
         print(f"Stars: {hotel.stars}")
         print(f"Room: {hotel.room}")
-        print(f"Available: {hotel.available}")
+        print(f"Availablity: {hotel.available}")
         print(f"Price: {hotel.price}")
         print()
     else:
-        print("Sorry, no hotels available at the moment: ")
-
-
+        print("Sorry, no hotels have available rooms at the moment: ")
 
 def show_available_hotels_by_city():
     if is_available == True
