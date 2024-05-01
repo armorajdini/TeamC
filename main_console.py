@@ -60,3 +60,4 @@ if __name__ == '__main__':
 
     # can be replaced with individual screens for different function like register, login, search etc.
     #navigate()
+

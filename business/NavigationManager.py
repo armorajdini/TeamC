@@ -1,77 +1,72 @@
 # include all navigation functions here
-
-# L1 4
-# Return single or multiple values from a function
-# Introduce Tuple, index
-# Tuples are immutable i.e., they cannot be modified
-# Introduce scope of variables - global/local
-# Introduce keyword "global"
-
-
-def search_hotels():
-    num_of_days = float(input("How many days would you like to stay"))
-    min_price = 50  # 120
-    max_price = 150
-    return num_of_days, min_price, max_price
-
-
-# Step 2.2: Call the function and collect the criteria in a variable
-# Step 2.3: criteria is a global variable which can be directly accessed inside any function
-criteria = search_hotels()
-print(type(criteria))
-print("Search criteria are: " + str(criteria))
-
-
-# Step 3: Show available hotels
-
-# Step 3.1: Define a function to show available hotel details
-def show_hotels_by_price_range():
-    # why do we need to define min_price and max_price again? Can't reuse from search_hotel()?
-    # note that criteria is accessing the global variable here
-    min_price = criteria[1]
-    max_price = criteria[2]
-
-    # try min_price < price_per_night and max_price > price_per_night
-    if max_price > price_per_night > min_price:
-        print("Name: %s" % hotel_name)
-        print("City: %s" % city)
-        print("No. of rooms: %d" % no_of_rooms)
-        print("Stars: %d" % stars)
-        print("Price per night: %.2f" % price_per_night)
-    else:
-        print("Sorry, no hotels in the given price range exist at the moment :(")
-
-
-# Step 3.2: Call the function and display hotel details
-show_hotels_by_price_range()
-
-
-# Step 3.3: Define function with parameters - criteria is a single parameter
-# Avoid defining global variables and using/modifying inside a function
-# Pass variable as input parameters and use return to collect results
-# Code is easier to maintain and debug
-
-def show_hotels_by_price_range(min_price, max_price):
-    # now criteria is taken from the function argument and not from the global variable
-    # here, both min_price and max_price are function parameters and have a local scope
-    print(min_price, max_price)
-    if min_price <= price_per_night <= max_price:
-        print("Name: %s" % hotel_name)
-        print("City: %s" % city)
-        print("No. of rooms: %d" % no_of_rooms)
-        print("Stars: %d" % stars)
-        print("Price per night: %0.2f" % price_per_night)
-        print("Availability: %s" % is_available)
-    else:
-        print("Sorry, no hotels in the given price range exist at the moment :(")
-
-
-show_hotels_by_price_range(criteria[1], criteria[2])
-
-
-
-
-
-
 # create menu, display menu, hand-over tasks to different "Managers" e.g. SearchManager/UserManager etc.
 
+from datetime import date, datetime, timedelta
+from pathlib import Path
+
+from sqlalchemy import create_engine, select, or_, and_
+from sqlalchemy.orm import scoped_session, sessionmaker
+
+from data_access.data_base import init_db
+from data_models.models import *
+
+class SearchManager:
+    def __init__(self, database_file):
+        database_path = Path(database_file)
+        if not database_path.is_file():
+            init_db(database_file, generate_example_data=True)
+        self.__engine = create_engine(f'sqlite:///{database_path}', echo=False)
+        self.__session = scoped_session(sessionmaker(bind=self.__engine))
+
+    def get_available_hotels(self, start_date: date, end_date: date):
+        query_booked_rooms = select(Room.number).join(Booking).where(
+            Booking.start_date.between(start_date, end_date) | Booking.end_date.between(start_date, end_date)
+        )
+        query_available_hotels = select(Hotel).group_by(Hotel.id).join(Room).where(
+            Room.number.not_in(query_booked_rooms))
+        return self.__session.execute(query_available_hotels).scalars().all()
+
+    def get_available_hotels_by_city(self, start_date: date, end_date: date, city : str):
+        query_booked_rooms = select(Room.number).join(Booking).where(
+            or_(Booking.start_date.between(start_date, end_date), Booking.end_date.between(start_date, end_date))
+        )
+        query_available_hotels = select(Hotel).join(Address).group_by(Hotel.id).join(Room).where(
+            and_(Room.number.not_in(query_booked_rooms), Address.city.like(f"%{city}%"))
+        )
+        return self.__session.execute(query_available_hotels).scalars().all()
+
+    def get_all_cities_with_hotels(self):
+        query = select(Address.city).join(Hotel)
+        return self.__session.execute(query).scalars().all()
+
+
+def check_user_input(question, valid):
+    user_in = input(question)
+    while user_in not in valid:
+        print("Invalid input. Please try again.")
+        user_in = input(question)
+    return user_in
+
+if __name__ == "__main__":
+    sm = SearchManager("../data/hotel_reservation.db")
+    cities_with_hotels = sm.get_all_cities_with_hotels()
+    print(cities_with_hotels)
+
+    start = input("Enter your arrival (MM.DD.YYYY): ")
+    date_format = "%d.%m.%Y"
+    start_date = datetime.strptime(start, date_format)
+    print(start_date.strftime(date_format))
+
+    stay = input("Enter how long you stay in days: ")
+    days = int(stay)
+    end_date = start_date + timedelta(days=days)
+    print(end_date.strftime(date_format))
+
+    available = sm.get_available_hotels(start_date, end_date)
+    for hotel in available:
+        print(hotel)
+
+    city = input("Enter city: ")
+    available_city = sm.get_available_hotels_by_city(start_date, end_date, city)
+    for hotel in available_city:
+        print(hotel)
