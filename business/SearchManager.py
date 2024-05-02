@@ -2,6 +2,8 @@
 # accept search criteria, search by various criteria
 
 from datetime import date, datetime, timedelta
+
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from sqlalchemy import create_engine, select, or_, and_
@@ -26,18 +28,18 @@ class SearchManager:
             Room.number.not_in(query_booked_rooms))
         return self.__session.execute(query_available_hotels).scalars().all()
 
-def get_available_hotels_by_city(self, start_date: date, end_date: date, city : str):
-    query_booked_rooms = select(Room.number).join(Booking).where(
+    def get_available_hotels_by_city(self, start_date: date, end_date: date, city : str):
+        query_booked_rooms = select(Room.number).join(Booking).where(
             or_(Booking.start_date.between(start_date, end_date), Booking.end_date.between(start_date, end_date))
-    )
-    query_available_hotels = select(Hotel).join(Address).group_by(Hotel.id).join(Room).where(
+        )
+        query_available_hotels = select(Hotel).join(Address).group_by(Hotel.id).join(Room).where(
             and_(Room.number.not_in(query_booked_rooms), Address.city.like(f"%{city}%"))
-    )
-    return self.__session.execute(query_available_hotels).scalars().all()
+        )
+        return self.__session.execute(query_available_hotels).scalars().all()
 
-def get_all_cities_with_hotels(self):
-    query = select(Address.city).join(Hotel)
-    return self.__session.execute(query).scalars().all()
+    def get_all_cities_with_hotels(self):
+        query = select(Address.city).join(Hotel)
+        return self.__session.execute(query).scalars().all()
 
 
 def check_user_input(question, valid):
@@ -71,6 +73,23 @@ if __name__ == "__main__":
     for hotel in available_city:
         print(hotel)
 
-        
-    user_stars = check_user_input(question="Enter stars: ", valid=["1", "2", "3", "4", "5"])
-    print(user_stars)
+    user_stars = input("Enter the number of stars:  ")
+    valid = ["1","2","3","4","5"]
+    while user_stars not in valid:
+        print(f"Please enter a number between {valid[0]} and {valid[1]}")
+        user_stars = input("Enter number of stars: ")
+
+    if user_stars == valid[0]:
+        print(f"You are looking for hotels with {user_stars} star")
+    else:
+        print(f"You are looking for hotels with {user_stars} stars")
+
+
+    def get_room_description(self, start_date, end_date, city):
+        query_booked_rooms = select(Room.description, Room.price, Room.type, Room.max_guests).join(Booking).where(
+            or_(Booking.start_date.between(start_date, end_date), Booking.end_date.between(start_date, end_date))
+        )
+        query_available_hotels = select(Hotel).join(Address).group_by(Hotel.id).join(Room).where(
+            and_(Room.number.not_in(query_booked_rooms), Address.city.like(f"%{city}%"))
+        )
+        return self.__get_room_description(query_available_hotels).scalars.all()
