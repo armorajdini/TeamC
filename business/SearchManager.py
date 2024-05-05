@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from sqlalchemy import create_engine, select, or_, and_
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker, session
 
 from data_access.data_base import init_db
 from data_models.models import *
@@ -84,12 +84,18 @@ if __name__ == "__main__":
     else:
         print(f"You are looking for hotels with {user_stars} stars")
 
-
-    def get_room_description(self, start_date, end_date, city):
-        query_booked_rooms = select(Room.description, Room.price, Room.type, Room.max_guests).join(Booking).where(
+    def get_room_description(self, start_date: date, end_date: date, city : str):
+        select(Room.description, Room.price, Room.type, Room.max_guests).join(Booking).where(
             or_(Booking.start_date.between(start_date, end_date), Booking.end_date.between(start_date, end_date))
         )
-        query_available_hotels = select(Hotel).join(Address).group_by(Hotel.id).join(Room).where(
-            and_(Room.number.not_in(query_booked_rooms), Address.city.like(f"%{city}%"))
+        query_available_hotels = select(Hotel).join(Room).group_by(Room.type).where(
+            and_(Room.number.not_in(get_room_description()
+            ))
         )
-        return self.__get_room_description(query_available_hotels).scalars.all()
+        return self.__session.execute(query_available_hotels).scalars.add()
+
+
+    def get_room_description(session, hotel_id, Room_type):
+        query = select(Room.hotel_id),and_(Room.description),and_(Room.price),and_(Room.type),and_(Room.amenities),and_(Room.max_guests)
+        result = session
+        return session.execute(session, hotel_id, Room_type).scalars().all()
