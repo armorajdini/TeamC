@@ -84,18 +84,12 @@ if __name__ == "__main__":
     else:
         print(f"You are looking for hotels with {user_stars} stars")
 
-    def get_room_description(self, start_date: date, end_date: date, city : str):
+    def get_room_description(self, start_date, end_date, city : str):
         select(Room.description, Room.price, Room.type, Room.max_guests).join(Booking).where(
             or_(Booking.start_date.between(start_date, end_date), Booking.end_date.between(start_date, end_date))
         )
         query_available_hotels = select(Hotel).join(Room).group_by(Room.type).where(
-            and_(Room.number.not_in(get_room_description()
-            ))
-        )
+            and_(Room.number.not_in(get_room_description(), Address.city.like(f"%{city}%"))
+        ))
         return self.__session.execute(query_available_hotels).scalars.add()
 
-
-    def get_room_description(session, hotel_id, Room_type):
-        query = select(Room.hotel_id),and_(Room.description),and_(Room.price),and_(Room.type),and_(Room.amenities),and_(Room.max_guests)
-        result = session
-        return session.execute(session, hotel_id, Room_type).scalars().all()
