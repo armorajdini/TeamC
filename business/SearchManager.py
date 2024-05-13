@@ -84,12 +84,15 @@ if __name__ == "__main__":
     else:
         print(f"You are looking for hotels with {user_stars} stars")
 
-    def get_room_description(self, start_date, end_date, city : str):
-        select(Room.description, Room.price, Room.type, Room.max_guests).join(Booking).where(
-            or_(Booking.start_date.between(start_date, end_date), Booking.end_date.between(start_date, end_date))
-        )
-        query_available_hotels = select(Hotel).join(Room).group_by(Room.type).where(
-            and_(Room.number.not_in(get_room_description(), Address.city.like(f"%{city}%"))
-        ))
-        return self.__session.execute(query_available_hotels).scalars.add()
+    nr_guests = input("For how many guests are you looking for ")
+    valid = ["1","2","3","4"]
+    while nr_guests not in valid:
+        print(f"Please enter a number between {valid[0]} and {valid[1]}")
+        nr_guests = input("Enter number of guests: ")
+
+    if nr_guests == valid[0]:
+            print(f"You are looking for hotels with {nr_guests} guest")
+    else:
+        print(f"You are looking for hotels with {nr_guests} guests")
+
 
