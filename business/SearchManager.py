@@ -91,7 +91,7 @@ if __name__ == "__main__":
         nr_guests = input("Enter number of guests: ")
 
     if nr_guests == valid[0]:
-            print(f"You are looking for hotels with {nr_guests} guest")
+        print(f"You are looking for hotels with {nr_guests} guest")
     else:
         print(f"You are looking for hotels with {nr_guests} guests")
 
