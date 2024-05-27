@@ -76,7 +76,7 @@ if __name__ == "__main__":
     user_stars = input("Enter the number of stars:  ")
     valid = ["1","2","3","4","5"]
     while user_stars not in valid:
-        print(f"Please enter a number between {valid[0]} and {valid[1]}")
+        print(f"Please enter a number between {valid[0]} and {valid[4]}")
         user_stars = input("Enter number of stars: ")
 
     if user_stars == valid[0]:
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     nr_guests = input("For how many guests are you looking for ")
     valid = ["1","2","3","4"]
     while nr_guests not in valid:
-        print(f"Please enter a number between {valid[0]} and {valid[1]}")
+        print(f"Please enter a number between {valid[0]} and {valid[3]}")
         nr_guests = input("Enter number of guests: ")
 
     if nr_guests == valid[0]:
