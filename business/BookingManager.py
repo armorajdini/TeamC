@@ -30,6 +30,11 @@ class BookingManager(BaseManager):
         available = [room for room in all_rooms if room not in booked_rooms]
         return available
 
+    def get_all_bookings(self):
+        bookings_query = select(Booking)
+        bookings = self.__session.execute(bookings_query).scalars().all()
+        return bookings
+
     def get_r_guest(self, id: int):
         guest_query = select(RegisteredGuest).where(RegisteredGuest.id == id)
         guest = self.__session.execute(guest_query).scalars().one()
