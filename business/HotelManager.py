@@ -70,7 +70,7 @@ class HotelManager(BaseManager):
         # Add address of hotel
         address_street = input("Street name: ")
         address_city = input("City name: ")
-        address_zip = input("Zip name: ")
+        address_zip = input("Zip code: ")
         full_address = Address(street=address_street, zip=address_zip, city=address_city)
 
         print(f"The address is: {full_address}, continue with the hotel infos")
