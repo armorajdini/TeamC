@@ -9,9 +9,8 @@ from data_access.data_base import init_db
 
 
 class BaseManager(object):
-    def __init__(self, generate_example_data: bool = True):
+    def __init__(self, generate_example_data: bool = True, db_file: Path = None):
         # Ensure the environment Variable is set
-        db_file = os.environ.get('DB_FILE')
         if not db_file:
             raise ValueError("You have to define the environment variable 'DB_FILE'")
         self.__db_filepath = Path(db_file)

@@ -15,14 +15,20 @@ from data_access.data_generator import *
 
 from business.SearchManager import SearchManager
 from business.BaseManager import BaseManager
+
+
 class UserManager(BaseManager):
-    def __init__(self):
-        super().__init__(True)
+    def __init__(self, db_file: Path):
+        super().__init__(True, db_file)
         self._current_user = None
         self._MAX_ATTEMPTS = 3
         self._attempts_left = self._MAX_ATTEMPTS
+        if not db_file.exists():
+            init_db(str(db_file), generate_example_data=True)
+        self.__engine = create_engine(f"sqlite:///{db_file}")
+        self.__session = scoped_session(sessionmaker(bind=self.__engine))
 
-    def get_current_login(self):
+    def get_current_user(self):
         return self._current_user
 
     def login(self, username, password):
@@ -35,10 +41,10 @@ class UserManager(BaseManager):
             self._attempts_left -= 1
         return self._current_user
 
-
     def logout(self):
         self._current_user = None
         self._attempts_left = self._MAX_ATTEMPTS
+        sys.exit(1) # raus nehmen wenn alle Parts kombiniert werden
 
     def has_attempts_left(self):
         if self._attempts_left <= 0:
@@ -46,38 +52,42 @@ class UserManager(BaseManager):
         else:
             return True
 
-    def is_admin(self, login:Login):
+    def is_admin(self, login: Login):
         if login.role.access_level == sys.maxsize:
             return True
         else:
             return False
 
-    def get_reg_guest_of(self, login:Login) -> RegisteredGuest:
+    def get_reg_guest_of(self, login: Login) -> RegisteredGuest:
         query = select(RegisteredGuest).where(RegisteredGuest.login == login)
         result = self._session.execute(query).scalars().one_or_none()
         return result
+
+    def login_user(self):
+
+        while self.has_attempts_left():
+            username = input('Username: ')
+            password = input('Password: ')
+            if self.login(username, password) is not None:
+                break
+            else:
+                print('Username or password wrong!')
+        if self.get_current_user() is not None:
+            if self.is_admin(self.get_current_user()):
+                print(f"Welcome administrator {self.get_current_user().username}")
+            else:
+                reg_guest = self.get_reg_guest_of(self.get_current_user())
+                print(f"Welcome {reg_guest.firstname} {reg_guest.lastname}!")
+        else:
+            print("Too many attempts, program is closed!")
+            sys.exit(1)
 
 
 if __name__ == '__main__':
     os.environ["DB_FILE"] = "../data/test.db"
     um = UserManager()
 
-    while um.has_attempts_left():
-        username = input('Username: ')
-        password = input('Password: ')
-        if um.login(username, password) is not None:
-            break
-        else:
-            print('Username or password wrong!')
-    if um.get_current_login() is not None:
-        if um.is_admin(um.get_current_login()):
-            print(f"Welcome administrator {um.get_current_login().username}")
-        else:
-            reg_guest = um.get_reg_guest_of(um.get_current_login())
-            print(f"Welcome {reg_guest.firstname} {reg_guest.lastname}!")
-    else:
-        print("Too many attempts, program is closed!")
-        sys.exit(1)
+    um.login_user()
 
     logout = input("Do you wish to logot? (y/n): ")
     match logout:
@@ -89,4 +99,3 @@ if __name__ == '__main__':
 
     um_1 = UserManager()
     print(um_1.get_current_login())
-

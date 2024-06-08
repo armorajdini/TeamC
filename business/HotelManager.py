@@ -1,7 +1,7 @@
 from pathlib import Path
 from datetime import datetime
-from sqlalchemy import create_engine, select, update, delete
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy import create_engine, select, update, delete, insert
+from sqlalchemy.orm import scoped_session, sessionmaker, joinedload
 from sqlalchemy.orm.scoping import scoped_session
 from data_access.data_base import init_db
 from data_models.models import *
@@ -11,6 +11,8 @@ from data_access.data_generator import *
 from business.SearchManager import SearchManager
 from business.BaseManager import BaseManager
 from business.BookingManager import BookingManager
+from business.UserManager import UserManager
+
 
 class HotelManager(BaseManager):
     def __init__(self, db_file: Path):
@@ -36,24 +38,158 @@ class HotelManager(BaseManager):
         query = select(Hotel)
         return self.__session.execute(query).scalars().all()
 
-    def update_hotel(self, hotel_id: int, name: str = None, stars: int = None, address: str = None):
-        update_values = {}
-        if name:
-            update_values[Hotel.name] = name
-        if stars:
-            update_values[Hotel.stars] = stars
-        if address:
-            update_values[Hotel.address] = address
+    def update_hotel(self, hotel_id: int, name: str = None, stars: int = None):
+        query = update(Hotel).where(Hotel.id == hotel_id).values(name=name, stars=stars)
+        self.__session.execute(query)
+        self.__session.commit()
 
-        if update_values:
-            hotel_query = update(Hotel).where(Hotel.id == hotel_id).values(**update_values)
-            self.__session.execute(hotel_query)
-            self.__session.commit()
+    def update_address(self, address_id: int, street: str, city: str, zip_code: int):
+        query = update(Address).where(Address.id == address_id).values(street=street, city=city, zip=zip_code)
+        self.__session.execute(query)
+        self.__session.commit()
 
-
-
-    def get_bookings_of(self, registered_guest_id:int):
+    def update_room(self, current_number: int, room_number: int, type: str, max_guests: int, description: str, amenities: str,
+                    price: float):
+        query = update(Room).where(Room.number == current_number).values(number=room_number, type=type, max_guests=max_guests,
+                                                              description=description, amenities=amenities, price=price)
+        self.__session.execute(query)
+        self.__session.commit()
         pass
+
+    def get_rooms_by_hotel_id(self, hotel_id: int):
+        # add join?
+        query = select(Room).join(Room.hotel).where(Hotel.id == hotel_id)
+        return self.__session.execute(query).scalars().all()
+
+    def add_hotel_console(self):
+
+        #Add hotel infos
+        hotel_name = input("Hotel name: ")
+        hotel_stars = input("Hotel stars: ")
+
+        # Add address of hotel
+        address_street = input("Street name: ")
+        address_city = input("City name: ")
+        address_zip = input("Zip name: ")
+        full_address = Address(street=address_street, zip=address_zip, city=address_city)
+
+        print(f"The address is: {full_address}, continue with the hotel infos")
+
+        # Add rooms of hotel
+        add_room = True
+        hotel_rooms = []
+
+        while add_room:
+            room_number = input("Room number: ")
+            room_type = input("Room type: ")
+            room_max_guests = input("Room max guests: ")
+            room_description = input("Room description: ")
+            room_amenities = input("Room amenities: ")
+            room_price = input("Room price: ")
+            add_room_input = input("Do you want to add another room (Y/N)")
+
+            # append new room to list
+            full_room = Room(number=room_number, type=room_type, max_guests=room_max_guests, description=room_description,
+                 amenities=room_amenities, price=room_price)
+            hotel_rooms.append(full_room)
+
+            # ask user to add another room
+            if add_room_input == "n" or add_room_input == "N":
+                add_room = False
+
+        for room in hotel_rooms:
+            print(f"Room infos: {room}")
+
+        hm.add_hotel(name=hotel_name, stars=hotel_stars, address=full_address, rooms=hotel_rooms)
+        check_all_hotels = hm.get_all_hotels()
+        print("all hotels after: ")
+        for hotel in check_all_hotels:
+            print(hotel)
+
+    def update_hotel_console(self):
+        print("All Hotels:")
+        all_hotels = hm.get_all_hotels()
+        for hotel in all_hotels:
+            print(hotel)
+
+        print("1.) Update Hotel-info")
+        print("2.) Update Hotel-address")
+        print("3.) Update Hotel-rooms")
+        user_selection_update = input("Please choose an option: ")
+
+        match user_selection_update:
+            case "1":
+                print("UPDATE HOTEL")
+                update_hotel_id = int(input("select hotel to update values: "))
+                for hotel in all_hotels:
+                    if hotel.id == update_hotel_id:
+                        selected_hotel = hotel
+
+                print(f"selected hotel: {selected_hotel}")
+
+                # update hotel infos
+                update_hotel_name = input("Hotel name: ")
+                update_hotel_stars = int(input("Hotel stars: "))
+
+                hm.update_hotel(selected_hotel.id, update_hotel_name, update_hotel_stars)
+            case "2":
+                print("UPDATE ADDRESS")
+                update_hotel_id = int(input("select hotel to update values: "))
+                for hotel in all_hotels:
+                    if hotel.id == update_hotel_id:
+                        selected_address_id = hotel.address.id
+
+                update_address_street = input("Street name: ")
+                update_address_city = input("City name: ")
+                update_address_zip = input("Zip code: ")
+
+                hm.update_address(address_id=selected_address_id, street=update_address_street, city=update_address_city, zip_code=update_address_zip)
+            case "3":
+                print("GET ROOMS BY HOTEL_ID")
+                selected_hotel_id = int(input("SELECT HOTEL BY ID: "))
+                all_rooms = hm.get_rooms_by_hotel_id(selected_hotel_id)
+
+                for room in all_rooms:
+                    print(f"room in all_rooms: {room}")
+
+                selected_room_number = int(input("UPDATE ROOM BY ROOM_NUMBER: "))
+
+                update_room_number = int(input("Room number: "))
+                update_room_type = input("Room type: ")
+                update_room_max_guests = int(input("Room max guests: "))
+                update_room_description = input("Room description: ")
+                update_room_amenities = input("Room amenities: ")
+                update_room_price = int(input("Room price: "))
+
+                hm.update_room(selected_room_number,update_room_number, update_room_type, update_room_max_guests,
+                               update_room_description, update_room_amenities, update_room_price)
+
+                all_rooms = hm.get_rooms_by_hotel_id(selected_hotel_id)
+
+                for room in all_rooms:
+                    print(f"room in all_rooms after update: {room}")
+
+        print("All Hotels after update:")
+        all_hotels = hm.get_all_hotels()
+        for hotel in all_hotels:
+            print(hotel)
+
+
+
+    def remove_hotel_console(self):
+        print("All Hotels:")
+        hotels = hm.get_all_hotels()
+        for hotel in hotels:
+            print(hotel)
+
+        delete_hotel_id = int(input("Id to delete Hotel by id: "))
+
+        hm.remove_hotel(delete_hotel_id)
+
+        print("All Hotels after removing:")
+        all_hotels = hm.get_all_hotels()
+        for hotel in all_hotels:
+            print(hotel)
 
 
 
@@ -63,30 +199,38 @@ if __name__ == '__main__':
     hm = HotelManager(db_path)
     sm = SearchManager(db_path)
     bm = BookingManager(db_path)
+    um = UserManager(db_path)
 
-    print("All Hotels:")
-    all_hotels = hm.get_all_hotels()
-    for hotel in all_hotels:
-        print(hotel)
-    input("Press Enter to continue...")
-    print("\n")
+    # login user -> only admins can access this part
+    um.login_user()
+    current_user = um.get_current_user()
 
-    address_1 = Address(street="Beispiel",zip="4321",city="Bern")
-    room_1 = [Room(number = "01",type="Double",max_guests=2,description="Wunderschönes Doppelzimmer",amenities="tbd",
-                      price=130)]
-    hm.add_hotel(name="Test Hotel2", stars=4, address=address_1, rooms=room_1)
-    all_hotels = hm.get_all_hotels()
-    for hotel in all_hotels:
-        print(hotel)
+    while True:
+        if current_user.role.name == "administrator":
+            print("** ---------------- Hotel Manager ---------------- **")
+            print("1.) Add Hotel")
+            print("2.) Remove Hotel")
+            print("3.) Update Hotel / Address / Room information")
+            print("4.) Get all bookings")
+            user_selection = input("Please choose an option: ")
 
-    hm.remove_hotel(hotel_id=14)
+            match user_selection:
+                case "1":
+                    pass
+                    hm.add_hotel_console()
+                case "2":
+                    pass
+                    hm.remove_hotel_console()
+                case "3":
+                    pass
+                    hm.update_hotel_console()
+                case "4":
+                    all_bookings = bm.get_all_bookings()
+                    for booking in all_bookings:
+                        print(f"Booking: {booking}")
 
-    updated_address = Address(street="Beispielupdate", city="Thun", zip="5555")
-    # hm.update_hotel(hotel_id=9, name="Test Hotel update", stars=5, address=updated_address)
-
-    print("All Bookings:")
-    all_bookings = bm.get_all_bookings()
-    for booking in all_bookings:
-        print(booking)
-    input("Press Enter to continue...")
-    print("\n")
+            user_logout_input = input("Do you want to logout?`(Y/N)")
+            if user_logout_input == "y" or user_logout_input == "Y":
+                um.logout()
+        else:
+            print("Please login as a Admin to access this part of the application")
