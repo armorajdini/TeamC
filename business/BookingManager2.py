@@ -11,17 +11,14 @@ from business.BaseManager import BaseManager
 
 class BookingManager(BaseManager):
     def __init__(self, db_file: Path):
-        if not db_file.exists():
-            init_db(str(db_file), generate_example_data=True)
-        self.__engine = create_engine(f"sqlite:///{db_file}")
-        self.__session = scoped_session(sessionmaker(bind=self.__engine))
+        super().__init__(db_file)
 
     def get_session(self):
-        return self.__session
+        return self._session
 
     def get_bookings_of(self, guest_id: int):
         query_booking = select(Booking).where(Booking.guest_id == guest_id)
-        bookings = self.__session.execute(query_booking).scalars().all()
+        bookings = self._session.execute(query_booking).scalars().all()
         return bookings
 
     def get_available_rooms(self, hotel: Hotel, start_date: datetime, end_date: datetime, number_of_guests: int):
@@ -29,19 +26,19 @@ class BookingManager(BaseManager):
             (Booking.start_date <= end_date) & (Booking.end_date >= start_date)
         ).where(Room.hotel_id == hotel.id)
         q_all_rooms = select(Room).where(Room.hotel_id == hotel.id).where(Room.max_guests >= number_of_guests)
-        booked_rooms = self.__session.execute(q_booked_rooms).scalars().all()
-        all_rooms = self.__session.execute(q_all_rooms).scalars().all()
+        booked_rooms = self._session.execute(q_booked_rooms).scalars().all()
+        all_rooms = self._session.execute(q_all_rooms).scalars().all()
         available = [room for room in all_rooms if room not in booked_rooms]
         return available
 
     def get_all_bookings(self):
         bookings_query = select(Booking)
-        bookings = self.__session.execute(bookings_query).scalars().all()
+        bookings = self._session.execute(bookings_query).scalars().all()
         return bookings
 
     def get_r_guest(self, id: int):
         guest_query = select(RegisteredGuest).where(RegisteredGuest.id == id)
-        guest = self.__session.execute(guest_query).scalars().one_or_none()
+        guest = self._session.execute(guest_query).scalars().one_or_none()
         if guest is None:
             print(f"Kein registrierter Gast gefunden mit ID: {id}")
         return guest
@@ -50,15 +47,15 @@ class BookingManager(BaseManager):
                        comment: str):
         booking = Booking(room=room, guest=guest, number_of_guests=number_of_guests,
                           start_date=start_date, end_date=end_date, comment=comment)
-        self.__session.add(booking)
-        self.__session.commit()
+        self._session.add(booking)
+        self._session.commit()
 
     def update_booking(self, booking_id: int, **kwargs):
         booking_query = select(Booking).where(Booking.id == booking_id)
-        booking = self.__session.execute(booking_query).scalars().one()
+        booking = self._session.execute(booking_query).scalars().one()
         for key, value in kwargs.items():
             setattr(booking, key, value)
-        self.__session.commit()
+        self._session.commit()
 
     def delete_booking(self, booking_id: int, file_path: Path = None):
         if file_path and file_path.exists():
@@ -69,8 +66,8 @@ class BookingManager(BaseManager):
                 print(f"Fehler beim Löschen der Datei: {e}")
 
         delete_query = delete(Booking).where(Booking.id == booking_id)
-        self.__session.execute(delete_query)
-        self.__session.commit()
+        self._session.execute(delete_query)
+        self._session.commit()
 
     def save_booking_details_to_file(self, booking: Booking, file_path: Path):
         try:
@@ -89,7 +86,7 @@ class BookingManager(BaseManager):
 
     def login(self, username: str, password: str):
         login_query = select(Login).where(Login.username == username).where(Login.password == password)
-        user = self.__session.execute(login_query).scalars().one_or_none()
+        user = self._session.execute(login_query).scalars().one_or_none()
         if user is None:
             print(f"Ungültige Anmeldeinformationen für Benutzer: {username}")
         return user
@@ -156,8 +153,19 @@ def manage_booking(bm, bookings, guest):
 
 
 if __name__ == '__main__':
-    db_path = Path("../../data/hotel_reservation.db")
-    bm = BookingManager(db_path)
+    db_file = '../data/test.db'
+    db_path = Path(db_file)
+    # Ensure the environment Variable is set
+    if not db_path.is_file():
+        init_db(db_file, generate_example_data=True)
+
+    # create the engine and the session.
+    # the engine is private, no need for subclasses to be able to access it.
+    engine = create_engine(f'sqlite:///{db_file}')
+    # create the session as db connection
+    # subclasses need access therefore, protected attribute so every inheriting manager has access to the connection
+    session = scoped_session(sessionmaker(bind=engine))
+    bm = BookingManager(session)
 
     # User login
     username = input("Benutzername: ")

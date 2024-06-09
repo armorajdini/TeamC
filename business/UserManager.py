@@ -18,15 +18,11 @@ from business.BaseManager import BaseManager
 
 
 class UserManager(BaseManager):
-    def __init__(self, db_file: Path):
-        super().__init__(True, db_file)
+    def __init__(self, session):
+        super().__init__(session)
         self._current_user = None
         self._MAX_ATTEMPTS = 3
         self._attempts_left = self._MAX_ATTEMPTS
-        if not db_file.exists():
-            init_db(str(db_file), generate_example_data=True)
-        self.__engine = create_engine(f"sqlite:///{db_file}")
-        self.__session = scoped_session(sessionmaker(bind=self.__engine))
 
     def get_current_user(self):
         return self._current_user
@@ -84,8 +80,19 @@ class UserManager(BaseManager):
 
 
 if __name__ == '__main__':
-    os.environ["DB_FILE"] = "../data/test.db"
-    um = UserManager()
+    db_file = '../data/test.db'
+    db_path = Path(db_file)
+    # Ensure the environment Variable is set
+    if not db_path.is_file():
+        init_db(db_file, generate_example_data=True)
+
+    # create the engine and the session.
+    # the engine is private, no need for subclasses to be able to access it.
+    engine = create_engine(f'sqlite:///{db_file}')
+    # create the session as db connection
+    # subclasses need access therefore, protected attribute so every inheriting manager has access to the connection
+    session = scoped_session(sessionmaker(bind=engine))
+    um = UserManager(session)
 
     um.login_user()
 
