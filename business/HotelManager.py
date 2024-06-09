@@ -16,51 +16,48 @@ from business.UserManager import UserManager
 
 
 class HotelManager(BaseManager):
-    def __init__(self, db_file: Path):
-        if not db_file.is_file():
-            init_db(str(db_file), generate_example_data=True)
-        self.__engine = create_engine(f"sqlite:///{db_file}")
-        self.__session = scoped_session(sessionmaker(bind=self.__engine))
+    def __init__(self, session):
+        super().__init__(session)
 
     def add_hotel(self, name: str, stars: int, address: Address, rooms):
         if len(rooms) > 0:
             hotel = Hotel(name=name, stars=stars, address=address, rooms=rooms)
-            self.__session.add(hotel)
-            self.__session.commit()
+            self._session.add(hotel)
+            self._session.commit()
         else:
             raise AttributeError('Hotel with no rooms are not allowed')
 
     def remove_hotel(self, hotel_id: int):
         hotel_query = delete(Hotel).where(Hotel.id == hotel_id)
-        self.__session.execute(hotel_query)
-        self.__session.commit()
+        self._session.execute(hotel_query)
+        self._session.commit()
 
     def get_all_hotels(self):
         query = select(Hotel)
-        return self.__session.execute(query).scalars().all()
+        return self._session.execute(query).scalars().all()
 
     def update_hotel(self, hotel_id: int, name: str = None, stars: int = None):
         query = update(Hotel).where(Hotel.id == hotel_id).values(name=name, stars=stars)
-        self.__session.execute(query)
-        self.__session.commit()
+        self._session.execute(query)
+        self._session.commit()
 
     def update_address(self, address_id: int, street: str, city: str, zip_code: int):
         query = update(Address).where(Address.id == address_id).values(street=street, city=city, zip=zip_code)
-        self.__session.execute(query)
-        self.__session.commit()
+        self._session.execute(query)
+        self._session.commit()
 
-    def update_room(self, current_number: int, room_number: int, type: str, max_guests: int, description: str, amenities: str,
+    def update_room(self, room_id: int, room_number: int, type: str, max_guests: int, description: str, amenities: str,
                     price: float):
-        query = update(Room).where(Room.number == current_number).values(number=room_number, type=type, max_guests=max_guests,
+        query = update(Room).where(Room.id == room_id).values(number=room_number, type=type, max_guests=max_guests,
                                                               description=description, amenities=amenities, price=price)
-        self.__session.execute(query)
-        self.__session.commit()
+        self._session.execute(query)
+        self._session.commit()
         pass
 
     def get_rooms_by_hotel_id(self, hotel_id: int):
         # add join?
         query = select(Room).join(Room.hotel).where(Hotel.id == hotel_id)
-        return self.__session.execute(query).scalars().all()
+        return self._session.execute(query).scalars().all()
 
     def add_hotel_console(self):
 
@@ -152,8 +149,15 @@ class HotelManager(BaseManager):
 
                 for room in all_rooms:
                     print(f"room in all_rooms: {room}")
+                valid = False
+                while not valid:
+                    try:
+                        room_id = int(input("select room to update values:"))
+                        valid = True
+                    except ValueError:
+                        print("Please enter a valid id")
 
-                selected_room_number = int(input("UPDATE ROOM BY ROOM_NUMBER: "))
+                print(f"UPDATE ROOM WITH ID: {room_id}")
 
                 update_room_number = int(input("Room number: "))
                 update_room_type = input("Room type: ")
@@ -162,7 +166,7 @@ class HotelManager(BaseManager):
                 update_room_amenities = input("Room amenities: ")
                 update_room_price = int(input("Room price: "))
 
-                hm.update_room(selected_room_number,update_room_number, update_room_type, update_room_max_guests,
+                hm.update_room(room_id,update_room_number, update_room_type, update_room_max_guests,
                                update_room_description, update_room_amenities, update_room_price)
 
                 all_rooms = hm.get_rooms_by_hotel_id(selected_hotel_id)
@@ -195,12 +199,23 @@ class HotelManager(BaseManager):
 
 
 if __name__ == '__main__':
-    db_path = Path("../data/hotel_reservation.db")
+    db_file = '../data/test.db'
+    db_path = Path(db_file)
+    # Ensure the environment Variable is set
+    if not db_path.is_file():
+        init_db(db_file, generate_example_data=True)
 
-    hm = HotelManager(db_path)
-    sm = SearchManager(db_path)
-    bm = BookingManager(db_path)
-    um = UserManager(db_path)
+    # create the engine and the session.
+    # the engine is private, no need for subclasses to be able to access it.
+    engine = create_engine(f'sqlite:///{db_file}')
+    # create the session as db connection
+    # subclasses need access therefore, protected attribute so every inheriting manager has access to the connection
+    session = scoped_session(sessionmaker(bind=engine))
+
+    hm = HotelManager(session)
+    sm = SearchManager(session)
+    bm = BookingManager(session)
+    um = UserManager(session)
 
     # login user -> only admins can access this part
     um.login_user()

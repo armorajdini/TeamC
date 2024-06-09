@@ -13,17 +13,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class BookingManager(BaseManager):
-    def __init__(self, db_file: Path):
-        if not db_file.exists():
-            logger.info(f"Initializing database at {db_file}")
-            init_db(str(db_file), generate_example_data=True)
-        self.__engine = create_engine(f"sqlite:///{db_file}")
-        self.__session = scoped_session(sessionmaker(bind=self.__engine))
+    def __init__(self, session):
+        super().__init__(session)
 
     def get_bookings_of(self, guest_id: int):
         try:
             query_booking = select(Booking).where(Booking.guest_id == guest_id)
-            bookings = self.__session.execute(query_booking).scalars().all()
+            bookings = self._session.execute(query_booking).scalars().all()
             return bookings
         except Exception as e:
             logger.error(f"Error fetching bookings: {e}")
@@ -41,8 +37,8 @@ class BookingManager(BaseManager):
                 end_date=end_date,
                 comment=comment
             )
-            self.__session.add(booking)
-            self.__session.commit()
+            self._session.add(booking)
+            self._session.commit()
             logger.info("Booking created successfully")
         except Exception as e:
             logger.error(f"Error creating booking: {e}")
@@ -61,8 +57,8 @@ class BookingManager(BaseManager):
                     Room.max_guests >= number_of_guests
                 )
             )
-            booked_rooms = self.__session.execute(q_booked_rooms).scalars().all()
-            all_rooms = self.__session.execute(q_all_rooms).scalars().all()
+            booked_rooms = self._session.execute(q_booked_rooms).scalars().all()
+            all_rooms = self._session.execute(q_all_rooms).scalars().all()
             available = [room for room in all_rooms if room not in booked_rooms]
             return available
         except Exception as e:
@@ -72,7 +68,7 @@ class BookingManager(BaseManager):
     def get_all_bookings(self):
         try:
             bookings_query = select(Booking)
-            bookings = self.__session.execute(bookings_query).scalars().all()
+            bookings = self._session.execute(bookings_query).scalars().all()
             return bookings
         except Exception as e:
             logger.error(f"Error fetching all bookings: {e}")
@@ -81,7 +77,7 @@ class BookingManager(BaseManager):
     def get_guest(self, id: int):
         try:
             guest_query = select(Guest).where(Guest.id == id)
-            guest = self.__session.execute(guest_query).scalars().one()
+            guest = self._session.execute(guest_query).scalars().one()
             return guest
         except Exception as e:
             logger.error(f"Error fetching guest: {e}")
@@ -91,14 +87,14 @@ class BookingManager(BaseManager):
         try:
             # Check if the username already exists
             existing_user_query = select(Login).where(Login.username == email)
-            existing_user = self.__session.execute(existing_user_query).scalars().first()
+            existing_user = self._session.execute(existing_user_query).scalars().first()
 
             if existing_user:
                 # Check if the password matches
                 if existing_user.password == password:
                     logger.info("Welcome back!")
                     guest_query = select(Guest).where(Guest.email == email)
-                    guest = self.__session.execute(guest_query).scalars().first()
+                    guest = self._session.execute(guest_query).scalars().first()
                     return guest
                 else:
                     logger.error("Password does not match.")
@@ -106,16 +102,16 @@ class BookingManager(BaseManager):
             else:
                 # Create a new guest
                 role_query = select(Role).where(Role.name == "guest")
-                role = self.__session.execute(role_query).scalars().first()
+                role = self._session.execute(role_query).scalars().first()
                 if not role:
                     role = Role(name="guest", access_level=1)
-                    self.__session.add(role)
-                    self.__session.commit()
+                    self._session.add(role)
+                    self._session.commit()
 
                 # Create a dummy address if needed
                 address = Address(street="Unknown", zip="00000", city="Unknown")
-                self.__session.add(address)
-                self.__session.commit()
+                self._session.add(address)
+                self._session.commit()
 
                 # Create the Guest entry
                 guest = Guest(
@@ -125,13 +121,13 @@ class BookingManager(BaseManager):
                     address_id=address.id,
                     type="guest"
                 )
-                self.__session.add(guest)
-                self.__session.commit()
+                self._session.add(guest)
+                self._session.commit()
 
                 # Create the Login entry linked to the guest with the guest role
                 new_login = Login(username=email, password=password, role_id=role.id)
-                self.__session.add(new_login)
-                self.__session.commit()
+                self._session.add(new_login)
+                self._session.commit()
 
                 return guest
         except Exception as e:
@@ -141,19 +137,19 @@ class BookingManager(BaseManager):
     def update_booking(self, reservation_id: int, **kwargs):
         try:
             booking_query = select(Booking).where(Booking.id == reservation_id)
-            booking = self.__session.execute(booking_query).scalars().one()
+            booking = self._session.execute(booking_query).scalars().one()
             for key, value in kwargs.items():
                 setattr(booking, key, value)
-            self.__session.commit()
+            self._session.commit()
         except Exception as e:
             logger.error(f"Error updating booking: {e}")
 
     def delete_booking(self, reservation_id: int):
         try:
             booking_query = select(Booking).where(Booking.id == reservation_id)
-            booking = self.__session.execute(booking_query).scalars().one()
-            self.__session.delete(booking)
-            self.__session.commit()
+            booking = self._session.execute(booking_query).scalars().one()
+            self._session.delete(booking)
+            self._session.commit()
         except Exception as e:
             logger.error(f"Error deleting booking: {e}")
 
@@ -162,9 +158,9 @@ class BookingManager(BaseManager):
             room_query = select(Room).where(
                 and_(Room.hotel_id == room_hotel_id, Room.number == room_number)
             )
-            room = self.__session.execute(room_query).scalars().one()
+            room = self._session.execute(room_query).scalars().one()
             room.available = availability
-            self.__session.commit()
+            self._session.commit()
         except Exception as e:
             logger.error(f"Error updating room availability: {e}")
 
@@ -173,9 +169,9 @@ class BookingManager(BaseManager):
             room_query = select(Room).where(
                 and_(Room.hotel_id == room_hotel_id, Room.number == room_number)
             )
-            room = self.__session.execute(room_query).scalars().one()
+            room = self._session.execute(room_query).scalars().one()
             room.price = price
-            self.__session.commit()
+            self._session.commit()
         except Exception as e:
             logger.error(f"Error updating room price: {e}")
 
@@ -184,7 +180,7 @@ class BookingManager(BaseManager):
             user_query = select(Login).where(
                 and_(Login.username == email, Login.password == password)
             )
-            user = self.__session.execute(user_query).scalars().one_or_none()
+            user = self._session.execute(user_query).scalars().one_or_none()
 
             if user and user.role.name != 'guest':
                 return user
@@ -197,9 +193,20 @@ class BookingManager(BaseManager):
 
 
 if __name__ == '__main__':
-    db_path = Path("../../data/hotel_reservation.db")
-    sm = SearchManager(db_path)
-    bm = BookingManager(db_path)
+    db_file = '../data/test.db'
+    db_path = Path(db_file)
+    # Ensure the environment Variable is set
+    if not db_path.is_file():
+        init_db(db_file, generate_example_data=True)
+
+    # create the engine and the session.
+    # the engine is private, no need for subclasses to be able to access it.
+    engine = create_engine(f'sqlite:///{db_file}')
+    # create the session as db connection
+    # subclasses need access therefore, protected attribute so every inheriting manager has access to the connection
+    session = scoped_session(sessionmaker(bind=engine))
+    sm = SearchManager(session)
+    bm = BookingManager(session)
 
     user = None
     date_format = '%d.%m.%y'
