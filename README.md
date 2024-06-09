@@ -1,7 +1,11 @@
  # TeamC
 
+1. Vinci Claudio, Cruz Pablo, Ajdini Armor & Nagarajah Kavisan
+2. Wir haben die User Stories auf Manager aufgeteilt. SearchManager wurde von Claudio bearbeitet. Booking Manager wurde von Armor bearbeitet. Hotel Manager wurde von Kavisan bearbeitet. UserManager wurde von Pablo bearbeitet.
+3. Im nächsten Abschnitt ist die Erklärung bzw. Instruktionen unserer Applikation.
+
 Hotel Manager
-Die Klasse HotelManager kümmert sich um die Verwaltung von Hotels. Sie kann Hotels hinzufügen, entfernen und 
+Die Klasse HotelManager kümmert sich um die Verwaltung von Hotels. Sie kann Hotels hinzufügen, entfernen und
 aktualisieren. Außerdem verwaltet sie die zugehörigen Zimmer und Adressen der Hotels.
 
 Methoden:
