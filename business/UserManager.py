@@ -1,21 +1,11 @@
-# include all user-related functions here
-# login, register, authenticate
 import os
 import sys
-
 from pathlib import Path
-from datetime import datetime
-from sqlalchemy import create_engine, select, update, delete
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.orm.scoping import scoped_session
 from data_access.data_base import init_db
 from data_models.models import *
-
-from data_access.data_generator import *
-
-from business.SearchManager import SearchManager
 from business.BaseManager import BaseManager
-
 
 class UserManager(BaseManager):
     def __init__(self, session):
@@ -40,19 +30,12 @@ class UserManager(BaseManager):
     def logout(self):
         self._current_user = None
         self._attempts_left = self._MAX_ATTEMPTS
-        sys.exit(1) # raus nehmen wenn alle Parts kombiniert werden
 
     def has_attempts_left(self):
-        if self._attempts_left <= 0:
-            return False
-        else:
-            return True
+        return self._attempts_left > 0
 
     def is_admin(self, login: Login):
-        if login.role.access_level == sys.maxsize:
-            return True
-        else:
-            return False
+        return login.role.access_level == sys.maxsize
 
     def get_reg_guest_of(self, login: Login) -> RegisteredGuest:
         query = select(RegisteredGuest).where(RegisteredGuest.login == login)
@@ -60,15 +43,14 @@ class UserManager(BaseManager):
         return result
 
     def login_user(self):
-
         while self.has_attempts_left():
             username = input('Username: ')
             password = input('Password: ')
-            if self.login(username, password) is not None:
+            if self.login(username, password):
                 break
             else:
                 print('Username or password wrong!')
-        if self.get_current_user() is not None:
+        if self.get_current_user():
             if self.is_admin(self.get_current_user()):
                 print(f"Welcome administrator {self.get_current_user().username}")
             else:
@@ -77,32 +59,3 @@ class UserManager(BaseManager):
         else:
             print("Too many attempts, program is closed!")
             sys.exit(1)
-
-
-if __name__ == '__main__':
-    db_file = '../data/test.db'
-    db_path = Path(db_file)
-    # Ensure the environment Variable is set
-    if not db_path.is_file():
-        init_db(db_file, generate_example_data=True)
-
-    # create the engine and the session.
-    # the engine is private, no need for subclasses to be able to access it.
-    engine = create_engine(f'sqlite:///{db_file}')
-    # create the session as db connection
-    # subclasses need access therefore, protected attribute so every inheriting manager has access to the connection
-    session = scoped_session(sessionmaker(bind=engine))
-    um = UserManager(session)
-
-    um.login_user()
-
-    logout = input("Do you wish to logot? (y/n): ")
-    match logout:
-        case "y":
-            print(f"Goodbye {um.get_current_login().username}!")
-            um.logout()
-        case "n":
-            print(um.get_current_login())
-
-    um_1 = UserManager()
-    print(um_1.get_current_login())
