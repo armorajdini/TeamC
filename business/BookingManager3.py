@@ -6,6 +6,8 @@ from data_access.data_base import init_db
 from data_models.models import *
 from business.SearchManager import SearchManager
 from business.BaseManager import BaseManager
+from business.UserManager import UserManager
+from business.HotelManager import HotelManager
 import logging
 
 # Setup Logging
@@ -22,7 +24,7 @@ class BookingManager(BaseManager):
             bookings = self._session.execute(query_booking).scalars().all()
             return bookings
         except Exception as e:
-            logger.error(f"Error fetching bookings: {e}")
+            logger.error(f"Fehler beim Abrufen der Buchungen: {e}")
             return []
 
     def create_booking(self, room_hotel_id: int, room_number: str, guest_id: int, number_of_guests: int,
@@ -39,9 +41,9 @@ class BookingManager(BaseManager):
             )
             self._session.add(booking)
             self._session.commit()
-            logger.info("Booking created successfully")
+            logger.info("Buchung erfolgreich erstellt")
         except Exception as e:
-            logger.error(f"Error creating booking: {e}")
+            logger.error(f"Fehler beim Erstellen der Buchung: {e}")
 
     def get_available_rooms(self, hotel: Hotel, start_date: datetime, end_date: datetime, number_of_guests: int):
         try:
@@ -62,7 +64,7 @@ class BookingManager(BaseManager):
             available = [room for room in all_rooms if room not in booked_rooms]
             return available
         except Exception as e:
-            logger.error(f"Error fetching available rooms: {e}")
+            logger.error(f"Fehler beim Abrufen der verfügbaren Zimmer: {e}")
             return []
 
     def get_all_bookings(self):
@@ -71,7 +73,16 @@ class BookingManager(BaseManager):
             bookings = self._session.execute(bookings_query).scalars().all()
             return bookings
         except Exception as e:
-            logger.error(f"Error fetching all bookings: {e}")
+            logger.error(f"Fehler beim Abrufen aller Buchungen: {e}")
+            return []
+
+    def get_bookings_by_hotel(self, hotel_id: int):
+        try:
+            bookings_query = select(Booking).join(Room).where(Room.hotel_id == hotel_id)
+            bookings = self._session.execute(bookings_query).scalars().all()
+            return bookings
+        except Exception as e:
+            logger.error(f"Fehler beim Abrufen der Buchungen für das Hotel: {e}")
             return []
 
     def get_guest(self, id: int):
@@ -80,58 +91,30 @@ class BookingManager(BaseManager):
             guest = self._session.execute(guest_query).scalars().one()
             return guest
         except Exception as e:
-            logger.error(f"Error fetching guest: {e}")
+            logger.error(f"Fehler beim Abrufen des Gastes: {e}")
             return None
 
-    def create_or_login_guest(self, email: str, password: str):
+    def create_guest(self):
         try:
-            # Check if the username already exists
-            existing_user_query = select(Login).where(Login.username == email)
-            existing_user = self._session.execute(existing_user_query).scalars().first()
+            first_name = input("Bitte geben Sie Ihren Vornamen ein: ")
+            last_name = input("Bitte geben Sie Ihren Nachnamen ein: ")
+            email = input("Bitte geben Sie Ihre E-Mail-Adresse ein: ")
+            street = input("Bitte geben Sie Ihre Straße ein: ")
+            zip_code = input("Bitte geben Sie Ihre Postleitzahl ein: ")
+            city = input("Bitte geben Sie Ihre Stadt ein: ")
+            address = Address(street=street, zip=zip_code, city=city)
 
-            if existing_user:
-                # Check if the password matches
-                if existing_user.password == password:
-                    logger.info("Welcome back!")
-                    guest_query = select(Guest).where(Guest.email == email)
-                    guest = self._session.execute(guest_query).scalars().first()
-                    return guest
-                else:
-                    logger.error("Password does not match.")
-                    return None
-            else:
-                # Create a new guest
-                role_query = select(Role).where(Role.name == "guest")
-                role = self._session.execute(role_query).scalars().first()
-                if not role:
-                    role = Role(name="guest", access_level=1)
-                    self._session.add(role)
-                    self._session.commit()
-
-                # Create a dummy address if needed
-                address = Address(street="Unknown", zip="00000", city="Unknown")
-                self._session.add(address)
-                self._session.commit()
-
-                # Create the Guest entry
-                guest = Guest(
-                    firstname="Guest",
-                    lastname="User",
-                    email=email,
-                    address_id=address.id,
-                    type="guest"
-                )
-                self._session.add(guest)
-                self._session.commit()
-
-                # Create the Login entry linked to the guest with the guest role
-                new_login = Login(username=email, password=password, role_id=role.id)
-                self._session.add(new_login)
-                self._session.commit()
-
-                return guest
+            guest = Guest(
+                firstname=first_name,
+                lastname=last_name,
+                email=email,
+                address=address,
+            )
+            self._session.add(guest)
+            self._session.commit()
+            return guest
         except Exception as e:
-            logger.error(f"Error creating or logging in guest: {e}")
+            logger.error(f"Fehler beim Erstellen des Gastes: {e}")
             return None
 
     def update_booking(self, reservation_id: int, **kwargs):
@@ -142,7 +125,7 @@ class BookingManager(BaseManager):
                 setattr(booking, key, value)
             self._session.commit()
         except Exception as e:
-            logger.error(f"Error updating booking: {e}")
+            logger.error(f"Fehler beim Aktualisieren der Buchung: {e}")
 
     def delete_booking(self, reservation_id: int):
         try:
@@ -151,7 +134,7 @@ class BookingManager(BaseManager):
             self._session.delete(booking)
             self._session.commit()
         except Exception as e:
-            logger.error(f"Error deleting booking: {e}")
+            logger.error(f"Fehler beim Löschen der Buchung: {e}")
 
     def update_room_availability(self, room_hotel_id: int, room_number: str, availability: bool):
         try:
@@ -162,7 +145,7 @@ class BookingManager(BaseManager):
             room.available = availability
             self._session.commit()
         except Exception as e:
-            logger.error(f"Error updating room availability: {e}")
+            logger.error(f"Fehler beim Aktualisieren der Zimmerverfügbarkeit: {e}")
 
     def update_room_price(self, room_hotel_id: int, room_number: str, price: float):
         try:
@@ -173,120 +156,61 @@ class BookingManager(BaseManager):
             room.price = price
             self._session.commit()
         except Exception as e:
-            logger.error(f"Error updating room price: {e}")
+            logger.error(f"Fehler beim Aktualisieren des Zimmerpreises: {e}")
 
-    def login(self, email: str, password: str):
+    def download_booking_details(self, booking: Booking):
         try:
-            user_query = select(Login).where(
-                and_(Login.username == email, Login.password == password)
-            )
-            user = self._session.execute(user_query).scalars().one_or_none()
-
-            if user and user.role.name != 'guest':
-                return user
-            else:
-                logger.error("E-Mail oder Passwort ist falsch.")
-                return None
+            file_name = f"booking_details_{booking.id}.txt"
+            with open(file_name, 'w') as file:
+                file.write(f"Buchungs-ID: {booking.id}\n")
+                file.write(f"Hotel: {booking.room.hotel.name}\n")
+                file.write(f"Zimmernummer: {booking.room.number}\n")
+                file.write(f"Gästeanzahl: {booking.number_of_guests}\n")
+                file.write(f"Startdatum: {booking.start_date}\n")
+                file.write(f"Enddatum: {booking.end_date}\n")
+                file.write(f"Kommentar: {booking.comment}\n")
+            print(f"Buchungsdetails erfolgreich in {file_name} heruntergeladen.")
         except Exception as e:
-            logger.error(f"Error logging in: {e}")
-            return None
+            logger.error(f"Fehler beim Herunterladen der Buchungsdetails: {e}")
 
+def display_hotels(hotels):
+    print("\nVerfügbare Hotels:")
+    for i, hotel in enumerate(hotels, 1):
+        print(f"{i}. {hotel.name} - {hotel.address.city} - {hotel.stars} Sterne")
 
-if __name__ == '__main__':
-    db_file = '../data/test.db'
-    db_path = Path(db_file)
-    # Ensure the environment Variable is set
-    if not db_path.is_file():
-        init_db(db_file, generate_example_data=True)
+def display_rooms(rooms):
+    print("\nVerfügbare Zimmer:")
+    for i, room in enumerate(rooms, 1):
+        print(f"{i}. Zimmernummer: {room.number}, Preis: {room.price} EUR/Nacht, Max. Gäste: {room.max_guests}")
 
-    # create the engine and the session.
-    # the engine is private, no need for subclasses to be able to access it.
-    engine = create_engine(f'sqlite:///{db_file}')
-    # create the session as db connection
-    # subclasses need access therefore, protected attribute so every inheriting manager has access to the connection
-    session = scoped_session(sessionmaker(bind=engine))
-    sm = SearchManager(session)
-    bm = BookingManager(session)
-
-    user = None
-    date_format = '%d.%m.%y'
+def handle_guest_session(bm, sm, user, date_format):
+    print(f"Erfolgreich als neuer Gast angemeldet. Ihre Gast-ID ist {user.id}")
 
     while True:
-        if not user:
-            print("1. Als Gast fortfahren")
-            print("2. Anmelden")
-            print("3. Beenden")
-            choice = input("Wählen Sie eine Option: ")
+        print("\nGast-Menü:")
+        print("1. Neue Buchung erstellen")
+        print("2. Zurück zum Hauptmenü")
+        choice = input("Wählen Sie eine Option: ")
 
-            if choice == '1':
-                # Gastbenutzer: Prüfe oder registriere neuen Gast
-                email = input("Geben Sie Ihre E-Mail ein: ")
-                password = input("Geben Sie Ihr Passwort ein: ")
-                guest = bm.create_or_login_guest(email, password)
-                if guest:
-                    user = guest
-                    if guest.firstname == "Guest":
-                        print(f"Erfolgreich als neuer Gast angemeldet. Ihre Gast-ID ist {user.id}")
-                    else:
-                        print(f"Willkommen zurück, {guest.firstname}!")
-                else:
-                    print("Fehler bei der Anmeldung oder Registrierung als Gast.")
+        if choice == '1':
+            in_city = input("Stadt: ")
+            in_start = input("Startdatum (DD.MM.YY): ")
+            in_start_date = datetime.strptime(in_start, date_format)
 
-            elif choice == '2':
-                # Benutzeranmeldung
-                email = input("E-Mail: ")
-                password = input("Passwort: ")
-                user = bm.login(email, password)
-                if user:
-                    print(f"Benutzer {user.id} erfolgreich angemeldet.")
-                else:
-                    print("E-Mail oder Passwort ist falsch.")
-                    user = None
+            in_duration = int(input("Wie viele Tage?: "))
+            in_end_date = in_start_date + timedelta(days=in_duration)
 
-            elif choice == '3':
-                print("Programm beendet.")
-                break
-            else:
-                print("Ungültige Auswahl. Bitte versuchen Sie es erneut.")
-
-        else:
-            print("1. Meine Buchungen anzeigen")
-            print("2. Neue Buchung erstellen")
-            print("3. Buchung verwalten")
-            print("4. Logout")
-            choice = input("Wählen Sie eine Option: ")
-
-            if choice == '1':
-                bookings = bm.get_bookings_of(user.id)
-                if bookings:
-                    for i, booking in enumerate(bookings, 1):
-                        print(f"{i}. {booking}")
-                else:
-                    print("Keine Buchungen gefunden.")
-
-            elif choice == '2':
-                in_city = input("Stadt: ")
-                in_start = input("Startdatum (DD.MM.YY): ")
-                in_start_date = datetime.strptime(in_start, date_format)
-
-                in_duration = int(input("Wie viele Tage?: "))
-                in_end_date = in_start_date + timedelta(days=in_duration)
-
-                all_hotels = sm.get_available_hotels_by_city(in_start_date, in_end_date, in_city)
-                for i, hotel in enumerate(all_hotels, 1):
-                    print(f"{i}. {hotel}")
+            all_hotels = sm.get_available_hotels_by_city_stars_and_guests(in_start_date, in_end_date, in_duration, in_city)
+            if all_hotels:
+                display_hotels(all_hotels)
 
                 selection = int(input("Wählen Sie ein Hotel: "))
                 selected_hotel = all_hotels[selection - 1]
                 in_number_of_guests = int(input("Anzahl der Gäste: "))
 
-                available_rooms = bm.get_available_rooms(selected_hotel, in_start_date, in_end_date,
-                                                         in_number_of_guests)
-                if len(available_rooms) < 1:
-                    print("Keine Zimmer verfügbar!")
-                else:
-                    for i, room in enumerate(available_rooms, 1):
-                        print(f"{i}. {room}")
+                available_rooms = bm.get_available_rooms(selected_hotel, in_start_date, in_end_date, in_number_of_guests)
+                if available_rooms:
+                    display_rooms(available_rooms)
                     selection = int(input("Wählen Sie ein Zimmer: "))
                     selected_room = available_rooms[selection - 1]
 
@@ -295,50 +219,164 @@ if __name__ == '__main__':
                     bm.create_booking(selected_room.hotel_id, selected_room.number, user.id, in_number_of_guests,
                                       in_start_date, in_end_date, in_comment)
                     print("Buchung erfolgreich!")
+                else:
+                    print("Keine Zimmer verfügbar!")
+            else:
+                print("Keine Hotels verfügbar!")
+        elif choice == '2':
+            break
+        else:
+            print("Ungültige Auswahl. Bitte versuchen Sie es erneut.")
 
-            elif choice == '3':
-                bookings = bm.get_bookings_of(user.id)
-                if bookings:
-                    for i, booking in enumerate(bookings, 1):
-                        print(f"{i}. {booking}")
+def handle_admin_session(um, hm, bm):
+    current_user = um.get_current_user()
+    print(f"Willkommen, Administrator {current_user.username}")
 
-                    action = input("Möchten Sie eine Buchung aktualisieren (1) oder stornieren (2)?: ")
-                    if action == '1':
-                        reservation_id = int(
-                            input("Wählen Sie die Nummer der Buchung, die Sie aktualisieren möchten: "))
-                        selected_booking = bookings[reservation_id - 1]
+    while True:
+        print("\nAdmin-Menü:")
+        print("1. Alle Hotels anzeigen")
+        print("2. Logout")
+        admin_choice = input("Wählen Sie eine Option: ")
 
-                        print("1. Startdatum ändern")
-                        print("2. Enddatum ändern")
-                        print("3. Kommentar ändern")
-                        field_choice = input("Wählen Sie eine Option: ")
-                        if field_choice == '1':
-                            new_start_date = input("Neues Startdatum (DD.MM.YY): ")
-                            new_start_date = datetime.strptime(new_start_date, date_format)
-                            bm.update_booking(selected_booking.id, start_date=new_start_date)
-                        elif field_choice == '2':
-                            new_end_date = input("Neues Enddatum (DD.MM.YY): ")
-                            new_end_date = datetime.strptime(new_end_date, date_format)
-                            bm.update_booking(selected_booking.id, end_date=new_end_date)
-                        elif field_choice == '3':
-                            new_comment = input("Neuer Kommentar: ")
-                            bm.update_booking(selected_booking.id, comment=new_comment)
-                        else:
-                            print("Ungültige Auswahl.")
+        if admin_choice == '1':
+            all_hotels = hm.get_all_hotels()
+            if all_hotels:
+                display_hotels(all_hotels)
 
-                        print("Buchung erfolgreich aktualisiert!")
+                hotel_selection = int(input("Wählen Sie ein Hotel, um alle Buchungen zu sehen: "))
+                selected_hotel = all_hotels[hotel_selection - 1]
+                bookings = bm.get_bookings_by_hotel(selected_hotel.id)
 
-                    elif action == '2':
-                        reservation_id = int(input("Wählen Sie die Nummer der Buchung, die Sie stornieren möchten: "))
-                        selected_booking = bookings[reservation_id - 1]
-                        bm.delete_booking(selected_booking.id)
-                        print("Buchung erfolgreich gelöscht!")
+                for i, booking in enumerate(bookings, 1):
+                    print(f"{i}. {booking}")
+
+                detail_choice = input("Möchten Sie die Details einer Buchung herunterladen? (j/n): ")
+                if detail_choice.lower() == 'j':
+                    booking_id = int(input("Wählen Sie die Nummer der Buchung: "))
+                    selected_booking = bookings[booking_id - 1]
+                    bm.download_booking_details(selected_booking)
+            else:
+                print("Keine Hotels verfügbar.")
+        elif admin_choice == '2':
+            um.logout()
+            break
+        else:
+            print("Ungültige Auswahl. Bitte versuchen Sie es erneut.")
+
+def handle_registered_user_session(um, bm, sm, user, date_format):
+    print(f"Willkommen, {user.firstname} {user.lastname}")
+
+    while True:
+        print("\nBenutzer-Menü:")
+        print("1. Meine Buchungen anzeigen")
+        print("2. Neue Buchung erstellen")
+        print("3. Buchung verwalten")
+        print("4. Logout")
+        choice = input("Wählen Sie eine Option: ")
+
+        if choice == '1':
+            bookings = bm.get_bookings_of(user.id)
+            if bookings:
+                for i, booking in enumerate(bookings, 1):
+                    print(f"{i}. {booking}")
+            else:
+                print("Keine Buchungen gefunden.")
+
+        elif choice == '2':
+            handle_guest_session(bm, sm, user, date_format)
+
+        elif choice == '3':
+            bookings = bm.get_bookings_of(user.id)
+            if bookings:
+                for i, booking in enumerate(bookings, 1):
+                    print(f"{i}. {booking}")
+
+                action = input("Möchten Sie eine Buchung aktualisieren (1) oder stornieren (2)?: ")
+                if action == '1':
+                    reservation_id = int(input("Wählen Sie die Nummer der Buchung, die Sie aktualisieren möchten: "))
+                    selected_booking = bookings[reservation_id - 1]
+
+                    print("1. Startdatum ändern")
+                    print("2. Enddatum ändern")
+                    print("3. Kommentar ändern")
+                    print("4. Buchungsdetails herunterladen")
+                    field_choice = input("Wählen Sie eine Option: ")
+                    if field_choice == '1':
+                        new_start_date = input("Neues Startdatum (DD.MM.YY): ")
+                        new_start_date = datetime.strptime(new_start_date, date_format)
+                        bm.update_booking(selected_booking.id, start_date=new_start_date)
+                    elif field_choice == '2':
+                        new_end_date = input("Neues Enddatum (DD.MM.YY): ")
+                        new_end_date = datetime.strptime(new_end_date, date_format)
+                        bm.update_booking(selected_booking.id, end_date=new_end_date)
+                    elif field_choice == '3':
+                        new_comment = input("Neuer Kommentar: ")
+                        bm.update_booking(selected_booking.id, comment=new_comment)
+                    elif field_choice == '4':
+                        bm.download_booking_details(selected_booking)
                     else:
                         print("Ungültige Auswahl.")
 
-            elif choice == '4':
-                user = None
-                print("Erfolgreich ausgeloggt.")
+                    print("Buchung erfolgreich aktualisiert!")
 
+                elif action == '2':
+                    reservation_id = int(input("Wählen Sie die Nummer der Buchung, die Sie stornieren möchten: "))
+                    selected_booking = bookings[reservation_id - 1]
+                    bm.delete_booking(selected_booking.id)
+                    print("Buchung erfolgreich gelöscht!")
+                else:
+                    print("Ungültige Auswahl.")
+        elif choice == '4':
+            um.logout()
+            break
+        else:
+            print("Ungültige Auswahl. Bitte versuchen Sie es erneut.")
+
+if __name__ == '__main__':
+    db_file = '../data/test.db'
+    db_path = Path(db_file)
+    if not db_path.is_file():
+        init_db(db_file, generate_example_data=True)
+
+    engine = create_engine(f'sqlite:///{db_file}')
+    session = scoped_session(sessionmaker(bind=engine))
+    sm = SearchManager(session)
+    bm = BookingManager(session)
+    um = UserManager(session)
+    hm = HotelManager(session)
+
+    user = None
+    date_format = '%d.%m.%y'
+
+    print("Willkommen zum Hotelbuchungssystem von Team C!")
+    while True:
+        print("\nHauptmenü:")
+        print("1. Als Gast fortfahren")
+        print("2. Anmelden")
+        print("3. Beenden")
+        choice = input("Wählen Sie eine Option: ")
+
+        if choice == '1':
+            guest = bm.create_guest()
+            if guest:
+                user = guest
+                handle_guest_session(bm, sm, user, date_format)
             else:
-                print("Ungültige Auswahl. Bitte versuchen Sie es erneut.")
+                print("Fehler bei der Erstellung des Gastes.")
+
+        elif choice == '2':
+            um.login_user()
+            current_user = um.get_current_user()
+            if current_user:
+                if um.is_admin(current_user):
+                    handle_admin_session(um, hm, bm)
+                else:
+                    reg_guest = um.get_reg_guest_of(current_user)
+                    print(f"Registrierter Gast {reg_guest.firstname} {reg_guest.lastname} angemeldet.")
+                    user = reg_guest
+                    handle_registered_user_session(um, bm, sm, user, date_format)
+        elif choice == '3':
+            print("Auf Wiedersehen!")
+            break
+        else:
+            print("Ungültige Auswahl. Bitte versuchen Sie es erneut.")
