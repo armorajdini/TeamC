@@ -41,3 +41,5 @@ Die Konsolenschnittstelle bietet Administratoren Optionen zur Verwaltung von Hot
 4. Alle Buchungen abrufen
 
 Nur Benutzer mit der Administratorrolle können auf die Funktionen von HotelManger zugreifen.
+
+USER MANAGER
