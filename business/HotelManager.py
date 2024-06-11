@@ -172,7 +172,7 @@ class HotelManager(BaseManager):
                 all_rooms = hm.get_rooms_by_hotel_id(selected_hotel_id)
 
                 for room in all_rooms:
-                    print(f"room in all_rooms after update: {room}")
+                    print(f"room: {room}")
 
         print("All Hotels after update:")
         all_hotels = hm.get_all_hotels()
