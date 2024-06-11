@@ -169,3 +169,4 @@ if __name__ == "__main__":
                     print(f"Room total costs: {room.price * stay_duration}")
                     print(f"Room amenities: {room.amenities}")
                     print()
+                    print()
