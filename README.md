@@ -4,6 +4,32 @@
 2. Wir haben die User Stories auf Manager aufgeteilt. SearchManager wurde von Claudio bearbeitet. Booking Manager wurde von Armor bearbeitet. Hotel Manager wurde von Kavisan bearbeitet. UserManager wurde von Pablo bearbeitet.
 3. Im nächsten Abschnitt ist die Erklärung bzw. Instruktionen unserer Applikation.
 
+Search Manager 
+
+Der SearchManager verwaltet die Suche nach Hotels , verfügbaren Zimmern und Zimmereinzelheiten. Zusätzlich enthält er Funktionen zur validierung von Benutzereingaben und Datumsformaten.
+
+Methoden:
+get_all_cities_with_hotels: Ruft eine Liste von Städten mit Hotels ab.
+get_available_rooms: Finden Sie verfügbare Zimmer in einem Hotel für einen bestimmten Zeitraum und die Anzahl der Gäste.
+get_available_hotels_by_city_stars_and_guests: Lokalisieren Sie verfügbare Hotels basierend auf Stadt, Sternebewertung und Gästeanzahl.
+get_room_details: Holen Sie Details zu verfügbaren Zimmern in einem bestimmten Hotel ab.
+
+Funktionen: 
+check_user_input(question, valid): Validieren von Benutzereingaben anhand der bereitgestellten Optionen.
+get_date_input(prompt): Validieren und Parsen von Benutzereingaben für ein Datum im Format "TT.MM.JJJJ".
+
+Konsolenschnittstelle:
+Erlaubt die Eingabe des Ankunftsdatums, der Aufenthaltsdauer, der Auswahl der Stadt, der Sternebewertung und der Anzahl der Gäste.
+Validiert Benutzereingaben für Daten, Anzahl der Tage, Sternebewertung und Gäste.
+Zeigt verfügbare Städte mit Hotels an, falls vorhanden.
+Verarbeitet die Benutzereingabe zur Suche nach verfügbaren Hotels basierend auf den angegebenen Kriterien.
+Anzeige der Suchergebnisse:
+Zeigt eine entsprechende Meldung an, wenn keine Hotels für die ausgewählten Kriterien verfügbar sind.
+Für jedes verfügbare Hotel:
+Gibt den Hotelnamen aus.
+Ruft verfügbare Zimmerdetails ab und zeigt sie an, einschließlich Zimmertyp, Nummer, maximale Gäste, Preis pro Nacht, Gesamtkosten und Annehmlichkeiten.
+
+
 Base Manager
 
 Der BaseManager übernimmt die Verwaltung der Datenbank-Sitzung (_session), die für die Ausführung von Datenbankabfragen
