@@ -11,9 +11,8 @@ from data_access.data_generator import *
 
 from business.SearchManager import SearchManager
 from business.BaseManager import BaseManager
-from business.BookingManager import BookingManager
 from business.UserManager import UserManager
-
+from business.BookingManager import BookingManager
 
 class HotelManager(BaseManager):
     def __init__(self, session):
