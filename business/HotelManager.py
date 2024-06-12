@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 from datetime import datetime
 from sqlalchemy import create_engine, select, update, delete, insert
@@ -67,7 +68,7 @@ class HotelManager(BaseManager):
         # Add address of hotel
         address_street = input("Street name: ")
         address_city = input("City name: ")
-        address_zip = input("Zip name: ")
+        address_zip = input("Zip code: ")
         full_address = Address(street=address_street, zip=address_zip, city=address_city)
 
         print(f"The address is: {full_address}, continue with the hotel infos")
@@ -117,7 +118,7 @@ class HotelManager(BaseManager):
         match user_selection_update:
             case "1":
                 print("UPDATE HOTEL")
-                update_hotel_id = int(input("select hotel to update values: "))
+                update_hotel_id = int(input("select hotel id to update values: "))
                 for hotel in all_hotels:
                     if hotel.id == update_hotel_id:
                         selected_hotel = hotel
@@ -171,7 +172,7 @@ class HotelManager(BaseManager):
                 all_rooms = hm.get_rooms_by_hotel_id(selected_hotel_id)
 
                 for room in all_rooms:
-                    print(f"room in all_rooms after update: {room}")
+                    print(f"room: {room}")
 
         print("All Hotels after update:")
         all_hotels = hm.get_all_hotels()
@@ -227,6 +228,7 @@ if __name__ == '__main__':
             print("2.) Remove Hotel")
             print("3.) Update Hotel / Address / Room information")
             print("4.) Get all bookings")
+            print("5.) Show all hotels")
             user_selection = input("Please choose an option: ")
 
             match user_selection:
@@ -243,9 +245,14 @@ if __name__ == '__main__':
                     all_bookings = bm.get_all_bookings()
                     for booking in all_bookings:
                         print(f"Booking: {booking}")
+                case "5":
+                    all_hotels = hm.get_all_hotels()
+                    for hotels in all_hotels:
+                        print(f"Hotel: {hotels}")
 
             user_logout_input = input("Do you want to logout?`(Y/N)")
             if user_logout_input == "y" or user_logout_input == "Y":
                 um.logout()
         else:
             print("Please login as a Admin to access this part of the application")
+            sys.exit(1)
