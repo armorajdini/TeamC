@@ -9,37 +9,53 @@ from business.BaseManager import BaseManager
 
 # Function to display the welcome message
 def show_welcome():
-    print("Welcome to the Hotel Reservation System!")
+    print("Welcome to the Hotel Login System!")
 
-# Function to display the main menu
-def show_menu():
+# Function to display the main menu based on login status
+def show_menu(is_logged_in):
     print("\nMain Menu:")
-    print("1. Register")
-    print("2. Log in")
-    print("3. Exit")
+    if not is_logged_in:
+        print("1. Register")
+        print("2. Log in")
+        print("3. Exit")
+    else:
+        print("1. Search Hotels")
+        print("2. Logout")
+        print("3. Exit")
 
 # Function to navigate through the menu
 def navigate_menu(um):
+    is_logged_in = False
     while True:
-        show_menu()
+        show_menu(is_logged_in)
         choice = input("Choose an option: ")
-        if choice == '1':
-            um.register_user()
-        elif choice == '2':
-            um.login_user()
-            current_user = um.get_current_user()
-
-
-                    # More admin functions can be called here
-
-
-
-                        # More registered user functions can be called here
-        elif choice == '3':
-            print("Goodbye!")
-            break
+        if not is_logged_in:
+            if choice == '1':
+                um.register_user()
+            elif choice == '2':
+                um.login_user()
+                current_user = um.get_current_user()
+                if current_user:
+                    is_logged_in = True
+            elif choice == '3':
+                print("Goodbye!")
+                break
+            else:
+                print("Invalid choice. Please try again.")
         else:
-            print("Invalid choice. Please try again.")
+            if choice == '1':
+                # Call search manager methods to search hotels
+                print("Search Hotels")
+                # Placeholder for search functionality
+            elif choice == '2':
+                um.logout()
+                is_logged_in = False
+                print("You have logged out.")
+            elif choice == '3':
+                print("Goodbye!")
+                break
+            else:
+                print("Invalid choice. Please try again.")
 
 # Definition of the UserManager class
 class UserManager(BaseManager):
