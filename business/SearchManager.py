@@ -13,6 +13,10 @@ class SearchManager(BaseManager):
     def __init__(self, session):
         super().__init__(session)
 
+    def get_all_cities_with_hotels(self):
+        query = select(Address.city).join(Hotel)
+        return self._session.execute(query).scalars().all()
+
     def get_available_rooms(self, hotel_id, start_date: date, end_date: date, guests: int):
         query_booked_rooms = select(Room.id).join(Booking).where(
             Room.hotel_id == hotel_id,
@@ -73,10 +77,6 @@ class SearchManager(BaseManager):
             room_details.append(room_info)
 
         return room_details
-
-    def get_all_cities_with_hotels(self):
-        query = select(Address.city).join(Hotel)
-        return self._session.execute(query).scalars().all()
 
 
 def check_user_input(question, valid):
