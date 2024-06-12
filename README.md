@@ -10,9 +10,9 @@ Der SearchManager verwaltet die Suche nach Hotels , verfügbaren Zimmern und Zim
 
 Methoden:
 get_all_cities_with_hotels: Ruft eine Liste von Städten mit Hotels ab.
-get_available_rooms: Finden Sie verfügbare Zimmer in einem Hotel für einen bestimmten Zeitraum und die Anzahl der Gäste.
-get_available_hotels_by_city_stars_and_guests: Lokalisieren Sie verfügbare Hotels basierend auf Stadt, Sternebewertung und Gästeanzahl.
-get_room_details: Holen Sie Details zu verfügbaren Zimmern in einem bestimmten Hotel ab.
+get_available_rooms: Findet verfügbare Zimmer in einem Hotel für einen bestimmten Zeitraum und die Anzahl der Gäste.
+get_available_hotels_by_city_stars_and_guests: Lokalisiert verfügbare Hotels basierend auf Stadt, Sternebewertung und Gästeanzahl.
+get_room_details: Holt Details zu verfügbaren Zimmern in einem bestimmten Hotel ab.
 
 Funktionen: 
 check_user_input(question, valid): Validieren von Benutzereingaben anhand der bereitgestellten Optionen.
