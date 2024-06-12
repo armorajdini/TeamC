@@ -4,6 +4,21 @@
 2. Wir haben die User Stories auf Manager aufgeteilt. SearchManager wurde von Claudio bearbeitet. Booking Manager wurde von Armor bearbeitet. Hotel Manager wurde von Kavisan bearbeitet. UserManager wurde von Pablo bearbeitet.
 3. Im nächsten Abschnitt ist die Erklärung bzw. Instruktionen unserer Applikation.
 
+Base Manager
+
+Der BaseManager übernimmt die Verwaltung der Datenbank-Sitzung (_session), die für die Ausführung von Datenbankabfragen
+verwendet wird. Abgeleitete Klassen können somit direkt auf die Datenbank zugreifen, 
+ohne eigene Sitzungen erstellen zu müssen.
+
+Um zirkuläre Abhängigkeiten zu vermeiden, haben wir den BaseManager implementiert, der grundlegende Datenbankoperationen
+bereitstellt und von verschiedenen Manager-Klassen gerbt wird.
+Zum Beispiel wird select_all(self, query: Select)
+im Hotelmanager verwendet, um alle Ergebnisse als Liste zurückzuerhalten.
+Und select_one(self, query: Select)
+gibt ein einzelnes Ergebnis zurück. Sie wird im UserManager verwendet, 
+um einen spezifischen Benutzer basierend auf Benutzername und Passwort basierend auf dem Login abzurufen.
+
+
 Hotel Manager
 Die Klasse HotelManager kümmert sich um die Verwaltung von Hotels. Sie kann Hotels hinzufügen, entfernen und
 aktualisieren. Außerdem verwaltet sie die zugehörigen Zimmer und Adressen der Hotels.
