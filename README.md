@@ -42,4 +42,21 @@ Die Konsolenschnittstelle bietet Administratoren Optionen zur Verwaltung von Hot
 
 Nur Benutzer mit der Administratorrolle können auf die Funktionen von HotelManger zugreifen.
 
-USER MANAGER
+Im UserManager kann man sich anmelden (login_user) oder registrieren (register_user).
+
+Benutzer melden sich mit ihrem Benutzernamen (Emailadresse) und Passwort an.
+Die Methode login_user überprüft, ob der Benutzername und das Passwort übereinstimmen.
+Wenn die Anmeldeinformationen korrekt sind, wird der Benutzer angemeldet und eine Sitzung gestartet.
+Wenn die Anmeldeinformationen nicht korrekt sind, wird eine Fehlermeldung ausgegeben.
+Die Methode register_user wird verwendet, um einen neuen Benutzer zu registrieren.
+
+ existing_user_query = select(Login).where(Login.username == username)
+            existing_user = self._session.execute(existing_user_query).scalars().one_or_none()
+Damit wird überprüft, ob der Benutzername bereits vorhanden ist. 
+Wenn der Benutzername noch nicht vorhanden ist, wird der Benutzer registriert und eine Sitzung gestartet.
+Man hat 3 Versuche, sich anzumelden, bevor das Programm beendet wird.
+(has_attempts_left):
+Die Methode get_current_user wird verwendet, um den aktuell angemeldeten Benutzer zurückzugeben.
+Überprüfen, ob der angemeldete Benutzer die erforderlichen Rechte hat.
+(is_admin): Überprüft, ob der angemeldete Benutzer ein Administrator ist.
+Wenn der Benutzer ein Administrator ist, wird True zurückgegeben, andernfalls False.
