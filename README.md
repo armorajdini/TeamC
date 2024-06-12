@@ -101,3 +101,43 @@ Die Methode get_current_user wird verwendet, um den aktuell angemeldeten Benutze
 Überprüfen, ob der angemeldete Benutzer die erforderlichen Rechte hat.
 (is_admin): Überprüft, ob der angemeldete Benutzer ein Administrator ist.
 Wenn der Benutzer ein Administrator ist, wird True zurückgegeben, andernfalls False.
+
+BOOKINGMANAGER
+Hauptanwendung
+Der Einstiegspunkt der Anwendung befindet sich im Block if __name__ == '__main__':, der die Datenbank initialisiert und die Hauptmenüschleife startet.
+Datenbankinitialisierung: Überprüft, ob die Datenbankdatei existiert, und initialisiert sie mit Beispieldaten, falls nicht.
+Engine- und Sitzungserstellung: Richtet die SQLAlchemy-Engine und -Sitzung für die Datenbankinteraktion ein.
+Manager-Instanzen: Erstellt Instanzen von SearchManager, BookingManager, UserManager und HotelManager.
+BookingManager-Klasse
+BookingManager erweitert BaseManager und bietet Methoden zur Verwaltung von Buchungen:
+get_bookings_of(guest_id): Ruft Buchungen für einen bestimmten Gast ab.
+create_booking(room_hotel_id, room_number, guest_id, number_of_guests, start_date, end_date, comment): Erstellt eine neue Buchung.
+get_available_rooms(hotel, start_date, end_date, number_of_guests): Ruft verfügbare Zimmer in einem Hotel für einen bestimmten Zeitraum und eine bestimmte Gästeanzahl ab.
+get_all_bookings(): Ruft alle Buchungen ab.
+get_bookings_by_hotel(hotel_id): Ruft Buchungen für ein bestimmtes Hotel ab.
+get_guest(id): Ruft Gastdetails anhand der ID ab.
+create_guest(): Fordert den Benutzer auf, Gastdetails einzugeben und erstellt einen neuen Gast.
+**update_booking(reservation_id, kwargs): Aktualisiert die Details einer Buchung.
+delete_booking(reservation_id): Löscht eine Buchung.
+update_room_availability(room_hotel_id, room_number, availability): Aktualisiert den Verfügbarkeitsstatus eines Zimmers.
+update_room_price(room_hotel_id, room_number, price): Aktualisiert den Preis eines Zimmers.
+download_booking_details(booking): Lädt Buchungsdetails in eine Textdatei herunter.
+Benutzerinteraktionsfunktionen
+Diese Funktionen verwalten verschiedene Benutzersitzungen und Interaktionen:
+display_hotels(hotels): Zeigt eine Liste verfügbarer Hotels an.
+display_rooms(rooms): Zeigt eine Liste verfügbarer Zimmer an.
+handle_guest_session(bm, sm, user, date_format): Verwaltet die Sitzung für einen Gast und ermöglicht ihm, neue Buchungen zu erstellen.
+handle_admin_session(um, hm, bm): Verwaltet die Sitzung für einen Administrator und ermöglicht ihm, Hotels und Buchungen zu verwalten.
+handle_registered_user_session(um, bm, sm, user, date_format): Verwaltet die Sitzung für einen registrierten Benutzer und ermöglicht ihm, seine Buchungen anzusehen und zu verwalten.
+Hauptmenüschleife
+Das Hauptmenü bietet Optionen, als Gast fortzufahren, sich anzumelden oder die Anwendung zu beenden. Je nach Auswahl des Benutzers wird zur entsprechenden Sitzungsverwaltungsfunktion navigiert.
+Logging
+Das System verwendet das Python-logging-Modul, um Informationen und Fehler zu protokollieren, was die Verfolgung und Fehlerbehebung des Anwendungsverhaltens erleichtert.
+Ausführen der Anwendung
+Stellen Sie sicher, dass alle Abhängigkeiten installiert sind (SQLAlchemy, usw.).
+Führen Sie das Hauptskript mit Python aus.
+Folgen Sie den Anweisungen auf dem Bildschirm, um durch das System zu navigieren.
+Abhängigkeiten
+Python 3.x
+SQLAlchemy
+Weitere notwendige Module (pathlib, datetime, usw.)
