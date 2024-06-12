@@ -19,9 +19,7 @@ def show_menu(is_logged_in):
         print("2. Log in")
         print("3. Exit")
     else:
-        print("1. Search Hotels")
-        print("2. Logout")
-        print("3. Exit")
+        print("1. Logout")
 
 # Function to navigate through the menu
 def navigate_menu(um):
@@ -44,16 +42,9 @@ def navigate_menu(um):
                 print("Invalid choice. Please try again.")
         else:
             if choice == '1':
-                # Call search manager methods to search hotels
-                print("Search Hotels")
-                # Placeholder for search functionality
-            elif choice == '2':
                 um.logout()
                 is_logged_in = False
                 print("You have logged out.")
-            elif choice == '3':
-                print("Goodbye!")
-                break
             else:
                 print("Invalid choice. Please try again.")
 
@@ -103,7 +94,7 @@ class UserManager(BaseManager):
                 print('Username or password wrong!')
         if self.get_current_user():
             if self.is_admin(self.get_current_user()):
-                print(f"Welcome  {self.get_current_user().username}")
+                print(f"Welcome {self.get_current_user().username}")
             else:
                 reg_guest = self.get_reg_guest_of(self.get_current_user())
                 print(f"Welcome {reg_guest.firstname} {reg_guest.lastname}!")
@@ -157,7 +148,6 @@ class UserManager(BaseManager):
         except Exception as e:
             print(f"Error registering user: {e}")
             return None
-
 
 if __name__ == '__main__':
     os.environ["DB_FILE"] = "../data/test.db"
