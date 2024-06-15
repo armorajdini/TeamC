@@ -1,6 +1,8 @@
-# TeamC
+# TeamC Hotel-Reservierungssystem
 
-## Mitglieder
+
+
+## Autoren
 1. Vinci Claudio
 2. Cruz Pablo
 3. Ajdini Armor
