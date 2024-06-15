@@ -1,6 +1,6 @@
 # TeamC Hotel-Reservierungssystem
 
-
+![Logo von TeamC](./data_models/HotelTeamC.png)
 
 ## Autoren
 1. Vinci Claudio
