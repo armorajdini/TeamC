@@ -130,4 +130,4 @@ Das System verwendet das Python-logging-Modul, um Informationen und Fehler zu pr
 - Python 3.x
 - SQLAlchemy
 - Weitere notwendige Module (pathlib, datetime, usw.)
-- 
+
