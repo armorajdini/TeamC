@@ -334,7 +334,7 @@ def handle_registered_user_session(um, bm, sm, user, date_format):
             print("Invalid choice. Please try again.")
 
 if __name__ == '__main__':
-    db_file = '../data/test.db'
+    db_file = '../data/database.db'
     db_path = Path(db_file)
     if not db_path.is_file():
         init_db(db_file, generate_example_data=True)

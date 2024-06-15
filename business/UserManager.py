@@ -150,7 +150,7 @@ class UserManager(BaseManager):
             return None
 
 if __name__ == '__main__':
-    os.environ["DB_FILE"] = "../data/test.db"
+    os.environ["DB_FILE"] = "../data/database.db"
     db_file = os.environ["DB_FILE"]
     db_path = Path(db_file)
     if not db_path.is_file():

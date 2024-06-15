@@ -98,7 +98,7 @@ def get_date_input(prompt):
 
 
 if __name__ == "__main__":
-    db_file = '../data/test.db'
+    db_file = '../data/database.db'
     db_path = Path(db_file)
     if not db_path.is_file():
         init_db(db_file, generate_example_data=True)

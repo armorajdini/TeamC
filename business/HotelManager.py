@@ -198,7 +198,7 @@ class HotelManager(BaseManager):
 
 
 if __name__ == '__main__':
-    db_file = '../data/test.db'
+    db_file = '../data/database.db'
     db_path = Path(db_file)
     # Ensure the environment Variable is set
     if not db_path.is_file():
@@ -252,6 +252,7 @@ if __name__ == '__main__':
             user_logout_input = input("Do you want to logout?`(Y/N)")
             if user_logout_input == "y" or user_logout_input == "Y":
                 um.logout()
+                break
         else:
             print("Please login as a Admin to access this part of the application")
             sys.exit(1)
